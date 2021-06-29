@@ -483,7 +483,7 @@ namespace Cryptowatch
 		/// Returns a market’s OHLC candlestick data.
 		/// </summary>
 		/// <param name="route"> Candlestick specific url, e.g. https://api.cryptowat.ch/markets/gdax/btcusd/ohlc </param> 
-		/// <param name="timeFrame"> Candlestick timeframe.</param> 
+		/// <param name="timeFrames"> Candlestick timeframes.</param> 
 		/// <param name="after"> Only return candles opening after this time. If set to -1 max limit is 6000, otherwise it's 500.</param> 
 		/// <param name="before"> Only return candles opening before this time. </param> 
 		/// <exception cref="OutOfMemoryException"></exception>
@@ -498,9 +498,9 @@ namespace Cryptowatch
 		/// <exception cref="ProtocolViolationException"></exception>
 		/// <exception cref="WebException"></exception>
 		/// <exception cref="ObjectDisposedException"></exception>
-		public static List<Candlestick> GetCandlesticks(string route, TimeFrame timeFrame, long after = -2, long before = 0)
+		public static Dictionary<TimeFrame,List<Candlestick>> GetCandlesticks(string route, TimeFrame []timeFrames, long after = -2, long before = 0)
 		{
-			route += "?periods=" + ((int)timeFrame).ToString();
+			route += "?periods=" + String.Join(',',timeFrames.Select(_ => (int)_));
 			if (after != -2)
 			{
 				route += "&after=" + after.ToString();
@@ -511,13 +511,19 @@ namespace Cryptowatch
 			}
 			try
 			{
-			 	_Candlestick _candlestick = Deserialize<_Candlestick>(GetJObject(route));
-				List<Candlestick> candles = new List<Candlestick>();
-				foreach (var c in _candlestick.allCandlesticks)
-				{
-					candles.Add(new Candlestick((long)c[0], c[1], c[2], c[3], c[4], c[5]));
+				Dictionary<TimeFrame, List<Candlestick>> ret = new Dictionary<TimeFrame, List<Candlestick>>();
+				_Candlestick _candlestick = Deserialize<_Candlestick>(GetJObject(route));
+
+				foreach(var tf in timeFrames)
+                {
+					List<Candlestick> candles = new List<Candlestick>();
+					foreach (var c in _candlestick.allCandlesticks[tf])
+					{
+						candles.Add(new Candlestick((long)c[0], c[1], c[2], c[3], c[4], c[5]));
+					}
+					ret[tf] = candles;
 				}
-				return candles;
+				return ret;
 			}
 			catch
 			{
@@ -667,33 +673,33 @@ namespace Cryptowatch
 
 		private class _Candlestick
 		{
-			public double[][] allCandlesticks { get; set; }
+			public Dictionary<TimeFrame, double[][]> allCandlesticks { get; } = new Dictionary<TimeFrame, double[][]>();
 			[JsonProperty("60")]
-			private double[][] min { set { allCandlesticks = value; } }
+			private double[][] _60 { set { allCandlesticks[TimeFrame.min1] = value; } }
 			[JsonProperty("180")]
-			private double[][] _180 { set { allCandlesticks = value; } }
+			private double[][] _180 { set { allCandlesticks[TimeFrame.min3] = value; } }
 			[JsonProperty("300")]
-			private double[][] _300 { set { allCandlesticks = value; } }
+			private double[][] _300 { set { allCandlesticks[TimeFrame.min5] = value; } }
 			[JsonProperty("900")]
-			private double[][] _900 { set { allCandlesticks = value; } }
+			private double[][] _900 { set { allCandlesticks[TimeFrame.min15] = value; } }
 			[JsonProperty("1800")]
-			private double[][] _1800 { set { allCandlesticks = value; } }
+			private double[][] _1800 { set { allCandlesticks[TimeFrame.min30] = value; } }
 			[JsonProperty("3600")]
-			private double[][] _3600 { set { allCandlesticks = value; } }
+			private double[][] _3600 { set { allCandlesticks[TimeFrame.h1] = value; } }
 			[JsonProperty("7200")]
-			private double[][] _7200 { set { allCandlesticks = value; } }
+			private double[][] _7200 { set { allCandlesticks[TimeFrame.h2] = value; } }
 			[JsonProperty("14400")]
-			private double[][] _14400 { set { allCandlesticks = value; } }
+			private double[][] _14400 { set { allCandlesticks[TimeFrame.h4] = value; } }
 			[JsonProperty("21600")]
-			private double[][] _21600 { set { allCandlesticks = value; } }
+			private double[][] _21600 { set { allCandlesticks[TimeFrame.h6] = value; } }
 			[JsonProperty("43200")]
-			private double[][] _43200 { set { allCandlesticks = value; } }
+			private double[][] _43200 { set { allCandlesticks[TimeFrame.h12] = value; } }
 			[JsonProperty("86400")]
-			private double[][] _86400 { set { allCandlesticks = value; } }
+			private double[][] _86400 { set { allCandlesticks[TimeFrame.d1] = value; } }
 			[JsonProperty("259200")]
-			private double[][] _259200 { set { allCandlesticks = value; } }
+			private double[][] _259200 { set { allCandlesticks[TimeFrame.d3] = value; } }
 			[JsonProperty("604800")]
-			private double[][] _604800 { set { allCandlesticks = value; } }
+			private double[][] _604800 { set { allCandlesticks[TimeFrame.w1] = value; } }
 		}
 
 		private class Price
