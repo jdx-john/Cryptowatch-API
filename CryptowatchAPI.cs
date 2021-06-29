@@ -19,7 +19,12 @@ namespace Cryptowatch
 		/// <summary>
 		/// Allowance is updated with every call.
 		/// </summary>
-		public static Allowance allowance = null;
+		public static Allowance allowance { get; internal set; } = null;
+
+		/// <summary>
+		/// The last json object returned from the API.
+		/// </summary>
+		public static JObject json { get; internal set; } = null;
 
 		///<summary>
 		///You can always request this to query your allowance without any extra result - this request costs very little.
@@ -569,6 +574,7 @@ namespace Cryptowatch
 				string response = sr.ReadToEnd();
 				JObject jObject = JObject.Parse(response);
 				sr.Close();
+				json = jObject;
 				return jObject;
 			}
 			catch

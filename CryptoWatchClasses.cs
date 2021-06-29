@@ -255,7 +255,7 @@ namespace Cryptowatch
 
 	public class Allowance
 	{
-		public long cost { get; set; }
-		public long remaining { get; set; }
+		public double cost { get; set; }
+		public double remaining { get; set; }
 	}
 }
